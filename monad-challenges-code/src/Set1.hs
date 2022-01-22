@@ -6,7 +6,7 @@ module Set1 where
 import MCPrelude
 
 -- Define generalA to capture pattern
--- Rewrite exercises
+-- Rewrite exercises using Gen A
 
 type Gen a = Seed -> (a, Seed)
 
@@ -24,10 +24,7 @@ genNRand n f = take n $ map fst rands
 -- Random Number Generation
 
 fiveRands :: [Integer]
-fiveRands = take 5 $ map fst rands
-    where
-        rands :: [(Integer, Seed)]
-        rands = (0, mkSeed 1) : map (rand . snd) rands
+fiveRands = genNRand 5 rand
     
 -- Random Character Generation
 
@@ -35,44 +32,49 @@ randLetter :: Gen Char
 randLetter = generalA toLetter rand
 
 randString3 :: String 
-randString3 = nextRandChar 3 (mkSeed 1)
-
-nextRandChar :: Integer -> Seed -> String
-nextRandChar cnt seed =
-    if cnt == 0
-        then ""
-        else n : nextRandChar (cnt-1) newSeed
-    where
-        (n, newSeed) = randLetter seed
+randString3 = genNRand 3 randLetter
 
 -- More Generators
 
-randEven :: Gen Integer 
-randEven seed = (2 * n, newSeed)
-    where
-        (n, newSeed) = rand seed
+randEven :: Gen Integer
+randEven = generalA (2 *) rand 
 
 randOdd :: Gen Integer
-randOdd seed = (1 + n, newSeed)
-    where
-        (n, newSeed) = randEven seed
+randOdd = generalA (1 +) randEven
 
 randTen :: Gen Integer
-randTen seed = (10 * n, newSeed)
-    where
-        (n, newSeed) = rand seed
+randTen = generalA (10 *) rand
 
 testResult = product $ map (fst . \f -> f (mkSeed 1)) [randEven, randOdd, randTen]
 
+-- Generalizing random pairs
 
+randPair :: Gen (Char, Integer)
+randPair s =
+    let
+        (c, s') = randLetter s
+        (n, s'') = rand s'
+    in ((c, n), s'')
 
-randEven' :: Gen Integer
-randEven' = generalA (2 *) rand 
+generalPair :: Gen a -> Gen b -> Gen (a, b)
+generalPair f g s =
+    let
+        (v1, s') = f s
+        (v2, s'') = g s'
+    in ((v1, v2), s'')
 
-randOdd' :: Gen Integer
-randOdd' = generalA (1 +) randEven'
+randPair_ :: Gen (Char, Integer)
+randPair_ = generalPair randLetter rand
 
-randTen' :: Gen Integer
-randTen' = generalA (10 *) rand
+generalB :: (a -> b -> c) -> Gen a -> Gen b -> Gen c
+generalB comp f g s =
+    let
+        (v1, s') = f s
+        (v2, s'') = g s'
+    in (comp v1 v2, s'')
 
+generalPair2 :: Gen a -> Gen b -> Gen (a, b)
+generalPair2 f g s = generalB (,) f g s
 
+randPair2 :: Gen (Char, Integer)
+randPair2 = generalPair2 randLetter rand
