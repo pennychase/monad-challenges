@@ -5,6 +5,7 @@ module Set1 where
 
 import MCPrelude
 
+
 -- Random Number Generation
 
 fiveRands :: [Integer]
@@ -34,3 +35,24 @@ nextRandChar cnt seed =
         else n : nextRandChar (cnt-1) newSeed
     where
         (n, newSeed) = randLetter seed
+
+-- More Generators
+
+type Gen a = Seed -> (a, Seed)
+
+randEven :: Gen Integer 
+randEven seed = (2 * n, newSeed)
+    where
+        (n, newSeed) = rand seed
+
+randOdd :: Gen Integer
+randOdd seed = (1 + n, newSeed)
+    where
+        (n, newSeed) = randEven seed
+
+randTen :: Gen Integer
+randTen seed = (10 * n, newSeed)
+    where
+        (n, newSeed) = rand seed
+
+testResult = product $ map (fst . \f -> f (mkSeed 1)) [randEven, randOdd, randTen]
