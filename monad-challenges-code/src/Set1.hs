@@ -78,3 +78,34 @@ generalPair2 f g s = generalB (,) f g s
 
 randPair2 :: Gen (Char, Integer)
 randPair2 = generalPair2 randLetter rand
+
+-- Generalizing lists of generators
+
+repRandom :: [Gen a] -> Gen [a]
+repRandom [] s = ([], s)
+repRandom (f:fs) s = 
+    let
+        (v, s') = f s
+        (vs, s'') = repRandom fs s'
+    in (v:vs, s'')
+
+-- Threading the random number state
+
+genTwo :: Gen a -> (a -> Gen b) -> Gen b
+genTwo ga f s =
+    let
+        (v, s') = ga s
+    in f v s'
+
+mkGen :: a -> Gen a
+mkGen = (,)
+ 
+-- to test genTwo: getTwo randletter mkString (mkSeed 1)   
+mkString :: Char -> Gen String 
+mkString c s = 
+    let
+        (c', s') = randLetter s
+    in (c : [c'], s')
+
+
+
