@@ -5,6 +5,8 @@ module Set2 where
 
 import MCPrelude
 
+-- Maybe data type and instances
+
 data Maybe a = Nothing | Just a
 
 instance Show a => Show (Maybe a) where
@@ -16,6 +18,8 @@ instance Eq a => Eq (Maybe a) where
     Nothing == Nothing = True
     Nothing == Just _ = False
     Just _ == Nothing = False
+
+-- Safe functions
 
 headMay :: [a] -> Maybe a
 headMay [] = Nothing
@@ -57,3 +61,24 @@ minimumMay (x:xs) = go xs x
             if y < min
                 then go ys y
                 else go ys min
+
+-- Chains of failing computations
+
+queryGreek :: GreekData -> String -> Maybe Double
+queryGreek greek str =
+    case lookupMay str greek of
+        Nothing -> Nothing
+        Just xs ->
+            case tailMay xs of
+                Nothing -> Nothing
+                Just xss -> 
+                    case maximumMay xss of
+                        Nothing -> Nothing
+                        Just m -> 
+                            case headMay xs of
+                                Nothing -> Nothing
+                                Just n ->
+                                    case divMay (fromIntegral m) (fromIntegral n) of
+                                        Nothing -> Nothing
+                                        Just r -> Just r
+
